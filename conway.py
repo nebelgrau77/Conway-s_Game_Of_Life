@@ -1,10 +1,20 @@
 '''Conway's Game of Life draft'''
 
-import machine, ssd1306, uos
+from machine import Pin, SPI, I2C
+import ssd1306, uos
+
+import tinypico as TinyPICO
+from micropython_dotstar import DotStar
+
+# switch off the APA LED
+
+spi = SPI(sck = Pin(TinyPICO.DOTSTAR_CLK), mosi = Pin(TinyPICO.DOTSTAR_DATA), miso = Pin(TinyPICO.SPI_MISO))
+dotstar = DotStar(spi, 1, brightness = 0)
+TinyPICO.set_dotstar_power(False)
 
 # display setup
 
-i2c = machine.I2C(scl=machine.Pin(21), sda=machine.Pin(22))
+i2c = I2C(scl=Pin(21), sda=Pin(22))
 oled = ssd1306.SSD1306_I2C(128,32,i2c,0x3c)
 
 # helper functions
