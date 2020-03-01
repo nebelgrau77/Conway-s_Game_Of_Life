@@ -12,7 +12,7 @@
 # cells beyond the array boundaries are considered to be 0 (no wrapping)
 # 
 # currenty will restart after 1000 generations
-# 
+# git 
 
 from machine import Pin, SPI, I2C
 import ssd1306, uos
@@ -56,19 +56,18 @@ def matrix_evo(matrix, size):
     new_matrix = []
     for x in range(size):
         for y in range(size):
-            items = []
+            neighbors = 0 
             for n in [-1,0,1]:
                 for m in [-1,0,1]:
                     if x + n < 0 or y + m < 0 or x + n > size - 1 or y + m > size - 1 or m == n == 0:
-                        items.append(0)
+                        pass
                     else:
-                        items.append(matrix[x+n][y+m])
+                        neighbors = neighbors + matrix[x+n][y+m]
+                    
                     cell = matrix[x][y]
-                    neighbors = sum(items)
                     new_cell = evo(cell, neighbors)
             new_matrix.append((x,y,new_cell))
     return new_matrix
-
 
 def matrix_update(matrix, new_matrix):
     '''update the previous matrix'''
