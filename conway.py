@@ -50,8 +50,8 @@ def evo(cell, neighbors):
 
 
 def matrix_evo(matrix, size):
-    '''returns a new matrix calculated according to the rules of the Game of Life'''
-    new_matrix = []
+    #returns a new matrix calculated according to the rules of the Game of Life
+    new_matrix = [[0 for _ in range(size)] for _ in range(size)]
     for x in range(size):
         for y in range(size):
             neighbors = 0 
@@ -64,15 +64,8 @@ def matrix_evo(matrix, size):
                     
                     cell = matrix[x][y]
                     new_cell = evo(cell, neighbors)
-            new_matrix.append((x,y,new_cell))
+            new_matrix[x][y] = new_cell
     return new_matrix
-
-
-def matrix_update(matrix, new_matrix):
-    '''update the previous matrix'''
-    for item in new_matrix:
-        matrix[item[0]][item[1]] = item[2]
-    return matrix
 
 
 def display_matrix(matrix, size):
@@ -111,11 +104,9 @@ while True:
         
         gen = gen + 1
         
-        new_matrix = matrix_evo(matrix,32)
-        
-        matrix = matrix_update(matrix, new_matrix)
-        
-        display_matrix(matrix,32)
+        matrix = matrix_evo(matrix,64)
+
+        display_matrix(matrix,64)
         
         display_info(gen)
 
