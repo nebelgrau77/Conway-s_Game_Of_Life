@@ -1,0 +1,120 @@
+# Conway's Game of Life draft
+#
+# 64x64 pixels version
+#
+# by: nebelgrau77 
+#  
+# as described here: https://en.wikipedia.org/wiki/Conway's_Game_of_Life
+#
+# written for ESP32 boards: will not run on ESP8266 due to memory constraints
+#
+# simple algorithm used for calculation of neighbours at the borders of the field
+# cells beyond the array boundaries are considered to be 0 (no wrapping)
+# 
+# currenty will restart after 1000 generations
+# 
+
+from machine import Pin, SPI, I2C
+import ssd1306, uos
+
+import tinypico as TinyPICO
+from micropython_dotstar import DotStar
+
+# switch off the APA LED on the TinyPICO
+# to be omitted for other ESP32 boards
+
+spi = SPI(sck = Pin(TinyPICO.DOTSTAR_CLK), mosi = Pin(TinyPICO.DOTSTAR_DATA), miso = Pin(TinyPICO.SPI_MISO))
+dotstar = DotStar(spi, 1, brightness = 0)
+TinyPICO.set_dotstar_power(False)
+
+# display setup
+
+i2c = I2C(scl=Pin(21), sda=Pin(22))
+oled = ssd1306.SSD1306_I2C(128,64,i2c,0x3c)
+
+# helper functions
+
+def randomcell():
+    '''generate random 1s and 0s'''
+    return uos.urandom(1)[0]%2
+
+def evo(cell, neighbors):
+    '''generate the new cell based on it's neighbors and the cell's initial state'''
+    
+    new_cell = 0
+    if cell == 1:
+        if neighbors in [2,3]:
+            new_cell = 1 # lives        
+    else:
+        if neighbors == 3:
+            new_cell = 1 # it takes three to give birth        
+    return new_cell    
+
+
+def matrix_evo(matrix, size):
+    '''returns a new matrix calculated according to the rules of the Game of Life'''
+    new_matrix = []
+    for x in range(size):
+        for y in range(size):
+            items = []
+            for n in [-1,0,1]:
+                for m in [-1,0,1]:
+                    if x + n < 0 or y + m < 0 or x + n > size - 1 or y + m > size - 1 or m == n == 0:
+                        items.append(0)
+                    else:
+                        items.append(matrix[x+n][y+m])
+                    cell = matrix[x][y]
+                    neighbors = sum(items)
+                    new_cell = evo(cell, neighbors)
+            new_matrix.append((x,y,new_cell))
+    return new_matrix
+
+
+def matrix_update(matrix, new_matrix):
+    '''update the previous matrix'''
+    for item in new_matrix:
+        matrix[item[0]][item[1]] = item[2]
+    return matrix
+
+
+def display_matrix(matrix, size):
+    '''prepare the matrix to be displayed'''
+    for x in range(size):
+        for y in range(size):
+            oled.pixel(x,y,matrix[x][y])
+
+def display_info(gen):
+    oled.fill_rect(100,0,28,8,0) # clean up the counter
+    oled.text("Gen:{:03d}".format(gen),72,0,1)
+
+# clean up the screen
+
+oled.fill(0)
+oled.show()
+
+while True:
+
+    gen = 0
+    
+    # first matrix
+    matrix = [[randomcell() for _ in range(64)] for _ in range(64)]
+
+    display_info(gen)
+
+    display_matrix(matrix,64)
+
+    oled.show()
+
+    while gen < 1000:
+        
+        gen = gen + 1
+        
+        new_matrix = matrix_evo(matrix,64)
+        
+        matrix = matrix_update(matrix, new_matrix)
+        
+        display_matrix(matrix,64)
+        
+        display_info(gen)
+
+        oled.show()
