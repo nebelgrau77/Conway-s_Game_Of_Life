@@ -1,4 +1,16 @@
-'''Conway's Game of Life draft'''
+# Conway's Game of Life draft
+#
+# by: nebelgrau77 
+#  
+# as described here: https://en.wikipedia.org/wiki/Conway's_Game_of_Life
+#
+# written for ESP32 boards: will not run on ESP8266 due to memory constraints
+#
+# simple algorithm used for calculation of neighbours at the borders of the field
+# cells beyond the array boundaries are considered to be 0 (no wrapping)
+# 
+# currenty will restart after 1000 generations
+# 
 
 from machine import Pin, SPI, I2C
 import ssd1306, uos
@@ -6,7 +18,8 @@ import ssd1306, uos
 import tinypico as TinyPICO
 from micropython_dotstar import DotStar
 
-# switch off the APA LED
+# switch off the APA LED on the TinyPICO
+# to be omitted for other ESP32 boards
 
 spi = SPI(sck = Pin(TinyPICO.DOTSTAR_CLK), mosi = Pin(TinyPICO.DOTSTAR_DATA), miso = Pin(TinyPICO.SPI_MISO))
 dotstar = DotStar(spi, 1, brightness = 0)
@@ -22,7 +35,6 @@ oled = ssd1306.SSD1306_I2C(128,32,i2c,0x3c)
 def randomcell():
     '''generate random 1s and 0s'''
     return uos.urandom(1)[0]%2
-
 
 def evo(cell, neighbors):
     '''generate the new cell based on it's neighbors and the cell's initial state'''
@@ -64,28 +76,47 @@ def matrix_update(matrix, new_matrix):
 
 
 def display_matrix(matrix, size):
+    '''prepare the matrix to be displayed'''
     for x in range(size):
         for y in range(size):
             oled.pixel(x,y,matrix[x][y])
-    oled.show()
+    
 
 
+def display_info(gen):
+    oled.text("GameOfLife", 48, 0,1)
+    oled.fill_rect(64,25,64,8,0) # clean up the counter
+    oled.text("Gen:   {:03d}".format(gen), 48,25,1)
 
-
-# first matrix
-
-matrix = [[randomcell() for _ in range(32)] for _ in range(32)]
 
 # clean up the screen
+
+oled.fill(0)
 oled.show()
 
-display_matrix(matrix,32)
-
-
 while True:
-    new_matrix = matrix_evo(matrix,32)
+
+    gen = 0
     
-    matrix = matrix_update(matrix, new_matrix)
-    
+    # first matrix
+    matrix = [[randomcell() for _ in range(32)] for _ in range(32)]
+
+    display_info(gen)
+
     display_matrix(matrix,32)
-    
+
+    oled.show()
+
+    while gen < 1000:
+        
+        gen = gen + 1
+        
+        new_matrix = matrix_evo(matrix,32)
+        
+        matrix = matrix_update(matrix, new_matrix)
+        
+        display_matrix(matrix,32)
+        
+        display_info(gen)
+
+        oled.show()
