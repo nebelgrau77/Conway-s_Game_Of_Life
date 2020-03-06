@@ -39,7 +39,7 @@ def randomcell():
     return uos.urandom(1)[0]%2
 
 def evo(cell, neighbors):
-    '''generate the new cell based on it's neighbors and the cell's initial state'''
+    '''generate the new cell based on its neighbors and the cell's initial state'''
     
     new_cell = 0
     if cell == 1:
